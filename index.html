@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>CATALOGO MAQUITEXT</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background: #f0f4fa; /* azul muy suave */
+      }
+      h1 {
+        text-align: center;
+        color: #1e3a8a; /* azul fuerte */
+      }
+      form {
+        display: grid;
+        gap: 10px;
+        margin-bottom: 20px;
+        background: #ffffff;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 5px solid #2563eb; /* azul brillante */
+        box-shadow: 0 0 8px rgba(0, 0, 50, 0.1);
+      }
+      input,
+      button {
+        padding: 10px;
+        font-size: 14px;
+        border: 1px solid #93c5fd;
+        border-radius: 5px;
+      }
+      input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 5px #93c5fd;
+      }
+      button {
+        cursor: pointer;
+        background: #2563eb;
+        color: white;
+        border: none;
+        transition: 0.3s;
+      }
+      button:hover {
+        background: #1e40af;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #ffffff;
+        margin-top: 20px;
+      }
+      th,
+      td {
+        border: 1px solid #93c5fd;
+        padding: 8px;
+        text-align: center;
+        vertical-align: middle;
+      }
+      th {
+        background: #2563eb;
+        color: white;
+      }
+      tr:nth-child(even) {
+        background: #eff6ff; /* azul claro en filas alternas */
+      }
+      img {
+        max-width: 50px;
+        max-height: 50px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>MAQUITEXT</h1>
+
+    <form id="formProducto">
+      <input type="text" id="modelo" placeholder="Modelo" required />
+      <input type="text" id="descripcion" placeholder="Descripción" required />
+      <input
+        type="number"
+        step="0.01"
+        id="precio6"
+        placeholder="Precio desde 6 UND"
+        required
+      />
+      <input
+        type="number"
+        step="0.01"
+        id="precio12"
+        placeholder="Precio desde 12 UND"
+        required
+      />
+      <input type="text" id="unidades" placeholder="Unidades" required />
+      <input type="file" id="imagen" accept="image/*" required />
+      <button type="submit">Agregar Producto</button>
+    </form>
+
+    <button onclick="generarPDF()">Generar PDF</button>
+
+    <table id="tablaProductos">
+      <thead>
+        <tr>
+          <th>Imagen</th>
+          <th>Modelo</th>
+          <th>Descripción</th>
+          <th>Precio 6 UND</th>
+          <th>Precio 12 UND</th>
+          <th>Unidades</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <script>
+      const { jsPDF } = window.jspdf;
+      let productos = [];
+
+      const form = document.getElementById("formProducto");
+      const tabla = document.querySelector("#tablaProductos tbody");
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        const modelo = document.getElementById("modelo").value;
+        const descripcion = document.getElementById("descripcion").value;
+        const precio6 = document.getElementById("precio6").value;
+        const precio12 = document.getElementById("precio12").value;
+        const unidades = document.getElementById("unidades").value;
+        const imagenInput = document.getElementById("imagen");
+
+        if (imagenInput.files.length === 0) {
+          alert("Por favor, selecciona una imagen.");
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          const producto = {
+            modelo,
+            descripcion,
+            precio6,
+            precio12,
+            unidades,
+            imagen: event.target.result, // base64 de la imagen
+          };
+
+          productos.push(producto);
+          actualizarTabla();
+          form.reset();
+        };
+        reader.readAsDataURL(imagenInput.files[0]);
+      });
+
+      function actualizarTabla() {
+        tabla.innerHTML = "";
+        productos.forEach((p) => {
+          const fila = `
+          <tr>
+            <td><img src="${p.imagen}" alt="img"></td>
+            <td>${p.modelo}</td>
+            <td>${p.descripcion}</td>
+            <td>$${p.precio6}</td>
+            <td>$${p.precio12}</td>
+            <td>${p.unidades}</td>
+          </tr>
+        `;
+          tabla.innerHTML += fila;
+        });
+      }
+
+      function generarPDF() {
+        if (productos.length === 0) {
+          alert("Agrega al menos un producto antes de generar el PDF.");
+          return;
+        }
+
+        const doc = new jsPDF();
+        doc.setFontSize(18);
+        doc.setTextColor(30, 58, 138);
+        doc.text("CATALOGO MAQUITEXT", 14, 20);
+
+        doc.autoTable({
+          startY: 30,
+          head: [
+            [
+              "Imagen",
+              "Modelo",
+              "Descripción",
+              "Precio 6 UND",
+              "Precio 12 UND",
+              "Unidades",
+            ],
+          ],
+          body: productos.map((p) => [
+            {
+              content: "",
+              styles: { cellWidth: 25, minCellHeight: 25 },
+              imagen: p.imagen,
+            },
+            p.modelo,
+            p.descripcion,
+            `$${p.precio6}`,
+            `$${p.precio12}`,
+            p.unidades,
+          ]),
+          didDrawCell: function (data) {
+            if (data.column.index === 0 && data.cell.section === "body") {
+              const producto = productos[data.row.index];
+              if (producto && producto.imagen) {
+                const dim = 18; // tamaño de la imagen
+                const x = data.cell.x + (data.cell.width - dim) / 2;
+                const y = data.cell.y + (data.cell.height - dim) / 2;
+                doc.addImage(producto.imagen, "JPEG", x, y, dim, dim);
+              }
+            }
+          },
+          styles: {
+            valign: "middle",
+            halign: "center",
+            lineColor: [147, 197, 253],
+            lineWidth: 0.2,
+          },
+          headStyles: { fillColor: [37, 99, 235], textColor: 255 },
+          alternateRowStyles: { fillColor: [239, 246, 255] },
+        });
+
+        doc.save("catalogo.pdf");
+      }
+    </script>
+  </body>
+</html>
