@@ -97,7 +97,13 @@
     </style>
   </head>
   <body>
-    <h1>CATALOGO MAQUITEXT</h1>
+    <div style="text-align: center; margin: 20px 0">
+      <img
+        src="/images/logo.jpg"
+        alt="CATALOGO MAQUITEXT"
+        style="max-width: 350px; height: auto; display: inline-block"
+      />
+    </div>
 
     <div class="panel">
       <form id="formProducto">
@@ -407,43 +413,44 @@
         const reader = new FileReader();
         reader.onload = function (e) {
           const data = e.target.result;
-          // read as binary string / arraybuffer
           const workbook = XLSX.read(data, { type: "binary" });
           const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
           const json = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
-          // Mapeamos a nuestro formato (soportamos nombres de columnas comunes)
+
+          // 🔹 Ajustamos el mapeo incluyendo "Descripción" (con tilde)
           const mapped = json.map((row) => {
             return {
               modelo: row.Modelo || row.modelo || row.model || "",
               descripcion:
+                row["Descripción"] || // <--- agregado para reconocer la tilde
                 row.Descripcion ||
                 row.descripcion ||
                 row.desc ||
                 row.description ||
                 "",
               precio6:
+                row["Precio 6 UND"] ||
                 row.Precio6 ||
                 row.precio6 ||
-                row["Precio 6 UND"] ||
                 row.price6 ||
                 "",
               precio12:
+                row["Precio 12 UND"] ||
                 row.Precio12 ||
                 row.precio12 ||
-                row["Precio 12 UND"] ||
                 row.price12 ||
                 "",
               unidades: row.Unidades || row.unidades || row.Units || "",
-              imagen: row.ImagenBase64 || row.imagen || row.Imagen || "", // esperamos base64 aquí
+              imagen: row.ImagenBase64 || row.imagen || row.Imagen || "",
             };
           });
+
           productos = mapped;
           saveToStorage();
           renderTable();
           importExcelInput.value = "";
           alert("Importación completa. Se actualizaron los productos.");
         };
-        // Read as binary (for xlsx)
         reader.readAsBinaryString(f);
       }
 
@@ -457,9 +464,10 @@
         }
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        doc.setFontSize(18);
+
         doc.setTextColor(30, 58, 138);
-        doc.text("CATALOGO MAQUITEXT", 14, 20);
+        doc.setFontSize(18);
+        doc.text("CATALOGO MAQUITEXT", 105, 20, { align: "center" });
 
         // Construir tablas por páginas si es necesario - aquí se deja automático por autotable
         doc.autoTable({
