@@ -3,185 +3,465 @@
   <head>
     <meta charset="UTF-8" />
     <title>CATALOGO MAQUITEXT</title>
+
+    <!-- jsPDF + autotable -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <!-- SheetJS (xlsx) para export/import Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <style>
       body {
         font-family: Arial, sans-serif;
         padding: 20px;
-        background: #f0f4fa; /* azul muy suave */
+        background: #f0f4fa;
       }
       h1 {
         text-align: center;
-        color: #1e3a8a; /* azul fuerte */
+        color: #1e3a8a;
+      }
+      .panel {
+        background: #fff;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 0 8px rgba(0, 0, 50, 0.06);
+        margin-bottom: 16px;
       }
       form {
         display: grid;
-        gap: 10px;
-        margin-bottom: 20px;
-        background: #ffffff;
-        padding: 15px;
-        border-radius: 8px;
-        border-left: 5px solid #2563eb; /* azul brillante */
-        box-shadow: 0 0 8px rgba(0, 0, 50, 0.1);
+        gap: 8px;
+        grid-template-columns: repeat(3, 1fr);
+        align-items: center;
+      }
+      form .full {
+        grid-column: 1 / -1;
+        display: flex;
+        gap: 8px;
+        align-items: center;
       }
       input,
-      button {
-        padding: 10px;
-        font-size: 14px;
+      button,
+      select {
+        padding: 8px;
+        border-radius: 6px;
         border: 1px solid #93c5fd;
-        border-radius: 5px;
-      }
-      input:focus {
-        outline: none;
-        border-color: #2563eb;
-        box-shadow: 0 0 5px #93c5fd;
       }
       button {
-        cursor: pointer;
         background: #2563eb;
-        color: white;
+        color: #fff;
+        cursor: pointer;
         border: none;
-        transition: 0.3s;
       }
-      button:hover {
+      button.secondary {
         background: #1e40af;
       }
       table {
         width: 100%;
         border-collapse: collapse;
-        background: #ffffff;
-        margin-top: 20px;
+        margin-top: 12px;
       }
       th,
       td {
-        border: 1px solid #93c5fd;
         padding: 8px;
+        border: 1px solid #93c5fd;
         text-align: center;
         vertical-align: middle;
       }
       th {
         background: #2563eb;
-        color: white;
+        color: #fff;
       }
       tr:nth-child(even) {
-        background: #eff6ff; /* azul claro en filas alternas */
+        background: #eff6ff;
       }
-      img {
-        max-width: 50px;
-        max-height: 50px;
+      img.thumb {
+        width: 48px;
+        height: 48px;
+        object-fit: cover;
+        border-radius: 4px;
+      }
+      .actions button {
+        margin-right: 6px;
+        padding: 6px 8px;
+        font-size: 13px;
+      }
+      .small {
+        padding: 6px 10px;
+        font-size: 13px;
+      }
+      .note {
+        font-size: 13px;
+        color: #334155;
       }
     </style>
   </head>
   <body>
-    <h1>MAQUITEXT</h1>
+    <h1>CATALOGO MAQUITEXT</h1>
 
-    <form id="formProducto">
-      <input type="text" id="modelo" placeholder="Modelo" required />
-      <input type="text" id="descripcion" placeholder="Descripción" required />
-      <input
-        type="number"
-        step="0.01"
-        id="precio6"
-        placeholder="Precio desde 6 UND"
-        required
-      />
-      <input
-        type="number"
-        step="0.01"
-        id="precio12"
-        placeholder="Precio desde 12 UND"
-        required
-      />
-      <input type="text" id="unidades" placeholder="Unidades" required />
-      <input type="file" id="imagen" accept="image/*" required />
-      <button type="submit">Agregar Producto</button>
-    </form>
+    <div class="panel">
+      <form id="formProducto">
+        <input type="text" id="modelo" placeholder="Modelo" required />
+        <input
+          type="text"
+          id="descripcion"
+          placeholder="Descripción"
+          required
+        />
+        <input
+          type="number"
+          step="0.01"
+          id="precio6"
+          placeholder="Precio desde 6 UND"
+          required
+        />
+        <input
+          type="number"
+          step="0.01"
+          id="precio12"
+          placeholder="Precio desde 12 UND"
+          required
+        />
+        <input type="text" id="unidades" placeholder="Unidades" required />
+        <input type="file" id="imagen" accept="image/*" />
 
-    <button onclick="generarPDF()">Generar PDF</button>
+        <div class="full">
+          <div style="display: flex; gap: 8px; align-items: center">
+            <button id="btnAgregar" class="small" type="submit">
+              Agregar Producto
+            </button>
+            <button
+              id="btnCancelarEdicion"
+              class="small"
+              type="button"
+              style="display: none; background: #f97316"
+            >
+              Cancelar edición
+            </button>
+          </div>
 
-    <table id="tablaProductos">
-      <thead>
-        <tr>
-          <th>Imagen</th>
-          <th>Modelo</th>
-          <th>Descripción</th>
-          <th>Precio 6 UND</th>
-          <th>Precio 12 UND</th>
-          <th>Unidades</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+          <div
+            style="
+              margin-left: auto;
+              display: flex;
+              gap: 8px;
+              align-items: center;
+            "
+          >
+            <input
+              id="importExcelInput"
+              type="file"
+              accept=".xlsx, .xls"
+              style="display: none"
+            />
+            <button id="btnExportExcel" type="button" class="small secondary">
+              Exportar a Excel
+            </button>
+            <button id="btnImportExcel" type="button" class="small">
+              Importar Excel
+            </button>
+            <button id="btnGenerarPDF" type="button" class="small">
+              Generar PDF
+            </button>
+          </div>
+        </div>
+      </form>
+      <div class="note"></div>
+    </div>
+
+    <div class="panel">
+      <table id="tablaProductos">
+        <thead>
+          <tr>
+            <th>Imagen</th>
+            <th>Modelo</th>
+            <th>Descripción</th>
+            <th>Precio 6 UND</th>
+            <th>Precio 12 UND</th>
+            <th>Unidades</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
     <script>
-      const { jsPDF } = window.jspdf;
+      // ---- Constantes y estado ----
+      const STORAGE_KEY = "catalogo_maquitext_v1";
       let productos = [];
+      let editIndex = -1; // -1 = modo crear, >=0 = editando índice
 
+      // Elementos
       const form = document.getElementById("formProducto");
-      const tabla = document.querySelector("#tablaProductos tbody");
+      const modeloInput = document.getElementById("modelo");
+      const descripcionInput = document.getElementById("descripcion");
+      const precio6Input = document.getElementById("precio6");
+      const precio12Input = document.getElementById("precio12");
+      const unidadesInput = document.getElementById("unidades");
+      const imagenInput = document.getElementById("imagen");
 
+      const tablaBody = document.querySelector("#tablaProductos tbody");
+      const btnExportExcel = document.getElementById("btnExportExcel");
+      const btnImportExcel = document.getElementById("btnImportExcel");
+      const importExcelInput = document.getElementById("importExcelInput");
+      const btnGenerarPDF = document.getElementById("btnGenerarPDF");
+      const btnCancelarEdicion = document.getElementById("btnCancelarEdicion");
+      const btnAgregar = document.getElementById("btnAgregar");
+
+      // Init
+      loadFromStorage();
+      renderTable();
+
+      // ---- Form submit (agregar/editar) ----
       form.addEventListener("submit", (e) => {
         e.preventDefault();
 
-        const modelo = document.getElementById("modelo").value;
-        const descripcion = document.getElementById("descripcion").value;
-        const precio6 = document.getElementById("precio6").value;
-        const precio12 = document.getElementById("precio12").value;
-        const unidades = document.getElementById("unidades").value;
-        const imagenInput = document.getElementById("imagen");
+        const modelo = modeloInput.value.trim();
+        const descripcion = descripcionInput.value.trim();
+        const precio6 = precio6Input.value.trim();
+        const precio12 = precio12Input.value.trim();
+        const unidades = unidadesInput.value.trim();
 
-        if (imagenInput.files.length === 0) {
-          alert("Por favor, selecciona una imagen.");
-          return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = function (event) {
-          const producto = {
+        // Si se seleccionó una imagen nueva -> leer base64; si no y estamos editando -> mantener imagen previa
+        if (imagenInput.files && imagenInput.files.length > 0) {
+          const file = imagenInput.files[0];
+          const reader = new FileReader();
+          reader.onload = function (ev) {
+            const base64 = ev.target.result;
+            saveProduct({
+              modelo,
+              descripcion,
+              precio6,
+              precio12,
+              unidades,
+              imagen: base64,
+            });
+          };
+          reader.readAsDataURL(file);
+        } else {
+          // Sin imagen nueva: en editar, mantener; en crear, dejar vacío
+          let imagen = "";
+          if (editIndex >= 0 && productos[editIndex])
+            imagen = productos[editIndex].imagen || "";
+          saveProduct({
             modelo,
             descripcion,
             precio6,
             precio12,
             unidades,
-            imagen: event.target.result, // base64 de la imagen
-          };
-
-          productos.push(producto);
-          actualizarTabla();
-          form.reset();
-        };
-        reader.readAsDataURL(imagenInput.files[0]);
+            imagen,
+          });
+        }
       });
 
-      function actualizarTabla() {
-        tabla.innerHTML = "";
-        productos.forEach((p) => {
-          const fila = `
-          <tr>
-            <td><img src="${p.imagen}" alt="img"></td>
-            <td>${p.modelo}</td>
-            <td>${p.descripcion}</td>
-            <td>$${p.precio6}</td>
-            <td>$${p.precio12}</td>
-            <td>${p.unidades}</td>
-          </tr>
-        `;
-          tabla.innerHTML += fila;
+      function saveProduct(productoObj) {
+        if (editIndex >= 0) {
+          productos[editIndex] = productoObj;
+          editIndex = -1;
+          btnCancelarEdicion.style.display = "none";
+          btnAgregar.textContent = "Agregar Producto";
+        } else {
+          productos.push(productoObj);
+        }
+        form.reset();
+        imagenInput.value = "";
+        saveToStorage();
+        renderTable();
+      }
+
+      // ---- Render tabla ----
+      function renderTable() {
+        tablaBody.innerHTML = "";
+        productos.forEach((p, idx) => {
+          const tr = document.createElement("tr");
+
+          const tdImg = document.createElement("td");
+          const img = document.createElement("img");
+          img.className = "thumb";
+          img.alt = "img";
+          img.src = p.imagen || "";
+          tdImg.appendChild(img);
+
+          const tdModelo = document.createElement("td");
+          tdModelo.textContent = p.modelo;
+          const tdDesc = document.createElement("td");
+          tdDesc.textContent = p.descripcion;
+          const tdP6 = document.createElement("td");
+          tdP6.textContent = `$${p.precio6}`;
+          const tdP12 = document.createElement("td");
+          tdP12.textContent = `$${p.precio12}`;
+          const tdUn = document.createElement("td");
+          tdUn.textContent = p.unidades;
+
+          const tdAcc = document.createElement("td");
+          tdAcc.className = "actions";
+
+          const btnEdit = document.createElement("button");
+          btnEdit.textContent = "Editar";
+          btnEdit.className = "small";
+          btnEdit.onclick = () => startEdit(idx);
+
+          const btnDel = document.createElement("button");
+          btnDel.textContent = "Eliminar";
+          btnDel.className = "small";
+          btnDel.style.background = "#ef4444";
+          btnDel.onclick = () => {
+            if (confirm("Eliminar este producto?")) {
+              productos.splice(idx, 1);
+              saveToStorage();
+              renderTable();
+            }
+          };
+
+          tdAcc.appendChild(btnEdit);
+          tdAcc.appendChild(btnDel);
+
+          tr.appendChild(tdImg);
+          tr.appendChild(tdModelo);
+          tr.appendChild(tdDesc);
+          tr.appendChild(tdP6);
+          tr.appendChild(tdP12);
+          tr.appendChild(tdUn);
+          tr.appendChild(tdAcc);
+
+          tablaBody.appendChild(tr);
         });
       }
 
+      function startEdit(idx) {
+        const p = productos[idx];
+        if (!p) return;
+        editIndex = idx;
+        modeloInput.value = p.modelo || "";
+        descripcionInput.value = p.descripcion || "";
+        precio6Input.value = p.precio6 || "";
+        precio12Input.value = p.precio12 || "";
+        unidadesInput.value = p.unidades || "";
+        imagenInput.value = ""; // si quiere cambiar imagen, debe seleccionar
+        btnCancelarEdicion.style.display = "inline-block";
+        btnAgregar.textContent = "Guardar cambios";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      btnCancelarEdicion.addEventListener("click", () => {
+        editIndex = -1;
+        form.reset();
+        imagenInput.value = "";
+        btnCancelarEdicion.style.display = "none";
+        btnAgregar.textContent = "Agregar Producto";
+      });
+
+      // ---- localStorage ----
+      function saveToStorage() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(productos));
+      }
+      function loadFromStorage() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          productos = raw ? JSON.parse(raw) : [];
+        } catch (e) {
+          productos = [];
+        }
+      }
+
+      // ---- Export to Excel (SheetJS) ----
+      btnExportExcel.addEventListener("click", () => {
+        try {
+          if (productos.length === 0) {
+            alert("No hay productos para exportar");
+            return;
+          }
+
+          // Exportamos SIN imágenes (solo texto y números)
+          const data = productos.map((p) => ({
+            Modelo: p.modelo,
+            Descripción: p.descripcion,
+            "Precio 6 UND": p.precio6,
+            "Precio 12 UND": p.precio12,
+            Unidades: p.unidades,
+            // 🚫 Imagen removida (era base64 y generaba error en Excel)
+          }));
+
+          const ws = XLSX.utils.json_to_sheet(data);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "Catálogo");
+
+          // Descargar el archivo
+          XLSX.writeFile(wb, "catalogo_maquitext.xlsx");
+        } catch (err) {
+          console.error("Error exportando Excel:", err);
+          alert(
+            "Ocurrió un error al generar el Excel. Revisa la consola del navegador."
+          );
+        }
+      });
+
+      // ---- Import Excel ----
+      btnImportExcel.addEventListener("click", () => importExcelInput.click());
+      importExcelInput.addEventListener("change", handleImportFile);
+
+      function handleImportFile(ev) {
+        const f = ev.target.files[0];
+        if (!f) return;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const data = e.target.result;
+          // read as binary string / arraybuffer
+          const workbook = XLSX.read(data, { type: "binary" });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
+          // Mapeamos a nuestro formato (soportamos nombres de columnas comunes)
+          const mapped = json.map((row) => {
+            return {
+              modelo: row.Modelo || row.modelo || row.model || "",
+              descripcion:
+                row.Descripcion ||
+                row.descripcion ||
+                row.desc ||
+                row.description ||
+                "",
+              precio6:
+                row.Precio6 ||
+                row.precio6 ||
+                row["Precio 6 UND"] ||
+                row.price6 ||
+                "",
+              precio12:
+                row.Precio12 ||
+                row.precio12 ||
+                row["Precio 12 UND"] ||
+                row.price12 ||
+                "",
+              unidades: row.Unidades || row.unidades || row.Units || "",
+              imagen: row.ImagenBase64 || row.imagen || row.Imagen || "", // esperamos base64 aquí
+            };
+          });
+          productos = mapped;
+          saveToStorage();
+          renderTable();
+          importExcelInput.value = "";
+          alert("Importación completa. Se actualizaron los productos.");
+        };
+        // Read as binary (for xlsx)
+        reader.readAsBinaryString(f);
+      }
+
+      // ---- Generar PDF (jsPDF + autoTable) ----
+      btnGenerarPDF.addEventListener("click", generarPDF);
+
       function generarPDF() {
         if (productos.length === 0) {
-          alert("Agrega al menos un producto antes de generar el PDF.");
+          alert("No hay productos para generar PDF");
           return;
         }
-
+        const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         doc.setFontSize(18);
         doc.setTextColor(30, 58, 138);
         doc.text("CATALOGO MAQUITEXT", 14, 20);
 
+        // Construir tablas por páginas si es necesario - aquí se deja automático por autotable
         doc.autoTable({
           startY: 30,
           head: [
@@ -197,8 +477,8 @@
           body: productos.map((p) => [
             {
               content: "",
-              styles: { cellWidth: 25, minCellHeight: 25 },
-              imagen: p.imagen,
+              styles: { cellWidth: 30, minCellHeight: 28 },
+              imagen: p.imagen || "",
             },
             p.modelo,
             p.descripcion,
@@ -207,13 +487,21 @@
             p.unidades,
           ]),
           didDrawCell: function (data) {
+            // dibujar imagen cuando estemos en la primera columna y en body
             if (data.column.index === 0 && data.cell.section === "body") {
-              const producto = productos[data.row.index];
-              if (producto && producto.imagen) {
-                const dim = 18; // tamaño de la imagen
+              const rowIndex = data.row.index;
+              const producto = productos[rowIndex];
+              const b64 = producto && producto.imagen ? producto.imagen : "";
+              if (b64) {
+                // ajustar tamaño para que entre en la celda
+                const dim = Math.min(26, data.cell.height - 4);
                 const x = data.cell.x + (data.cell.width - dim) / 2;
                 const y = data.cell.y + (data.cell.height - dim) / 2;
-                doc.addImage(producto.imagen, "JPEG", x, y, dim, dim);
+                try {
+                  doc.addImage(b64, "JPEG", x, y, dim, dim);
+                } catch (err) {
+                  // puede fallar si base64 no es compatible; ignoramos
+                }
               }
             }
           },
@@ -225,9 +513,10 @@
           },
           headStyles: { fillColor: [37, 99, 235], textColor: 255 },
           alternateRowStyles: { fillColor: [239, 246, 255] },
+          margin: { left: 10, right: 10 },
         });
 
-        doc.save("catalogo.pdf");
+        doc.save("catalogo_maquitext.pdf");
       }
     </script>
   </body>
