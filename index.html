@@ -1,202 +1,332 @@
 <!DOCTYPE html>
 <html lang="es">
   <head>
-    <meta charset="UTF-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>CATALOGO MAQUITEXT</title>
+
+    <!-- Inter font -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind Play CDN (rápido para prototipos / sin build) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- opcional: iconos Lucide -->
+    <script src="https://unpkg.com/lucide@0.264.0/dist/lucide.min.js"></script>
 
     <!-- jsPDF + autotable -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
-    <!-- SheetJS (xlsx) para export/import Excel -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- SheetJS -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <style>
+      html,
       body {
-        font-family: Arial, sans-serif;
-        padding: 20px;
-        background: #f0f4fa;
+        height: 100%;
       }
-      h1 {
-        text-align: center;
-        color: #1e3a8a;
+      body {
+        font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial;
+        background: linear-gradient(180deg, #f6f9ff 0%, #eef6ff 100%);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
-      .panel {
-        background: #fff;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 0 8px rgba(0, 0, 50, 0.06);
-        margin-bottom: 16px;
-      }
-      form {
-        display: grid;
-        gap: 8px;
-        grid-template-columns: repeat(3, 1fr);
-        align-items: center;
-      }
-      form .full {
-        grid-column: 1 / -1;
-        display: flex;
-        gap: 8px;
-        align-items: center;
-      }
-      input,
-      button,
-      select {
-        padding: 8px;
-        border-radius: 6px;
-        border: 1px solid #93c5fd;
-      }
-      button {
-        background: #2563eb;
-        color: #fff;
-        cursor: pointer;
-        border: none;
-      }
-      button.secondary {
-        background: #1e40af;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 12px;
-      }
-      th,
-      td {
-        padding: 8px;
-        border: 1px solid #93c5fd;
-        text-align: center;
-        vertical-align: middle;
-      }
-      th {
-        background: #2563eb;
-        color: #fff;
-      }
-      tr:nth-child(even) {
-        background: #eff6ff;
-      }
-      img.thumb {
-        width: 48px;
-        height: 48px;
-        object-fit: cover;
-        border-radius: 4px;
-      }
-      .actions button {
-        margin-right: 6px;
-        padding: 6px 8px;
-        font-size: 13px;
-      }
-      .small {
-        padding: 6px 10px;
-        font-size: 13px;
-      }
-      .note {
-        font-size: 13px;
-        color: #334155;
+
+      /* small custom for sticky table head shadow */
+      thead th::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 6px;
+        pointer-events: none;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0),
+          rgba(2, 6, 23, 0.02)
+        );
       }
     </style>
   </head>
-  <body>
-    <div style="text-align: center; margin: 20px 0">
-      <img
-        src="/images/logo.jpg"
-        alt="CATALOGO MAQUITEXT"
-        style="max-width: 350px; height: auto; display: inline-block"
-      />
-    </div>
-
-    <div class="panel">
-      <form id="formProducto">
-        <input type="text" id="modelo" placeholder="Modelo" required />
-        <input
-          type="text"
-          id="descripcion"
-          placeholder="Descripción"
-          required
-        />
-        <input
-          type="number"
-          step="0.01"
-          id="precio6"
-          placeholder="Precio desde 6 UND"
-          required
-        />
-        <input
-          type="number"
-          step="0.01"
-          id="precio12"
-          placeholder="Precio desde 12 UND"
-          required
-        />
-        <input type="text" id="unidades" placeholder="Unidades" required />
-        <input type="file" id="imagen" accept="image/*" />
-
-        <div class="full">
-          <div style="display: flex; gap: 8px; align-items: center">
-            <button id="btnAgregar" class="small" type="submit">
-              Agregar Producto
-            </button>
-            <button
-              id="btnCancelarEdicion"
-              class="small"
-              type="button"
-              style="display: none; background: #f97316"
-            >
-              Cancelar edición
-            </button>
-          </div>
-
-          <div
-            style="
-              margin-left: auto;
-              display: flex;
-              gap: 8px;
-              align-items: center;
-            "
-          >
-            <input
-              id="importExcelInput"
-              type="file"
-              accept=".xlsx, .xls"
-              style="display: none"
-            />
-            <button id="btnExportExcel" type="button" class="small secondary">
-              Exportar a Excel
-            </button>
-            <button id="btnImportExcel" type="button" class="small">
-              Importar Excel
-            </button>
-            <button id="btnGenerarPDF" type="button" class="small">
-              Generar PDF
-            </button>
+  <body class="min-h-screen">
+    <div class="max-w-6xl mx-auto px-4 py-8">
+      <!-- Header -->
+      <header
+        class="flex items-center gap-6 bg-white/60 backdrop-blur-sm rounded-2xl p-4 shadow-md"
+      >
+        <div class="flex items-center gap-4">
+          <img
+            src="/images/logo.jpg"
+            alt="MAQUITEXT"
+            class="h-16 w-auto object-contain rounded-md shadow-sm border"
+            onerror="this.style.display='none'"
+          />
+          <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900">
+              MAQUITEXT
+            </h1>
+            <p class="text-sm text-slate-500">
+              Generador de catálogos — administra, exporta e imprime
+            </p>
           </div>
         </div>
-      </form>
-      <div class="note"></div>
-    </div>
+        <div class="ml-auto flex gap-3 items-center">
+          <button
+            id="btnExportExcel"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow hover:scale-[0.995] transition-transform"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 3v12m9-9l-9 9-9-9"
+              />
+            </svg>
+            Exportar Excel
+          </button>
+          <button
+            id="btnImportExcel"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 hover:shadow"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4 text-slate-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 3v12m9-9l-9 9-9-9"
+              />
+            </svg>
+            Importar Excel
+          </button>
+          <button
+            id="btnGenerarPDF"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 text-white hover:bg-slate-900"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linejoin="round"
+                stroke-linecap="round"
+                stroke-width="2"
+                d="M7 17l5-5 5 5"
+              />
+            </svg>
+            Generar PDF
+          </button>
+        </div>
+      </header>
 
-    <div class="panel">
-      <table id="tablaProductos">
-        <thead>
-          <tr>
-            <th>Imagen</th>
-            <th>Modelo</th>
-            <th>Descripción</th>
-            <th>Precio 6 UND</th>
-            <th>Precio 12 UND</th>
-            <th>Unidades</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <!-- Main panel -->
+      <main class="mt-6 grid gap-6">
+        <section class="bg-white rounded-2xl shadow p-6">
+          <form
+            id="formProducto"
+            class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end"
+            autocomplete="off"
+          >
+            <div>
+              <label class="text-sm text-slate-600">Modelo</label>
+              <input
+                id="modelo"
+                type="text"
+                placeholder="Ej: MTX-2000"
+                class="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                required
+              />
+            </div>
+
+            <div>
+              <label class="text-sm text-slate-600">Descripción</label>
+              <input
+                id="descripcion"
+                type="text"
+                placeholder="Breve descripción del producto"
+                class="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                required
+              />
+            </div>
+
+            <div>
+              <label class="text-sm text-slate-600">Precio desde 6 UND</label>
+              <input
+                id="precio6"
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                class="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                required
+              />
+            </div>
+
+            <div>
+              <label class="text-sm text-slate-600">Precio desde 12 UND</label>
+              <input
+                id="precio12"
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                class="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                required
+              />
+            </div>
+
+            <div>
+              <label class="text-sm text-slate-600">Precio por unidad</label>
+              <input
+                id="unidades"
+                type="number"
+                step="0.01"
+                placeholder="Precio por unidad (ej: 1.50)"
+                class="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                required
+              />
+            </div>
+
+            <div>
+              <label class="text-sm text-slate-600">Imagen (jpg/png)</label>
+              <input
+                id="imagen"
+                type="file"
+                accept="image/*"
+                class="mt-1 block w-full text-sm text-slate-600"
+              />
+            </div>
+
+            <!-- actions -->
+            <div class="sm:col-span-3 flex items-center justify-between mt-2">
+              <div class="flex gap-3">
+                <button
+                  id="btnAgregar"
+                  type="submit"
+                  class="btn-primary inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linejoin="round"
+                      stroke-linecap="round"
+                      stroke-width="2"
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  Agregar producto
+                </button>
+                <button
+                  id="btnCancelarEdicion"
+                  type="button"
+                  class="hidden px-3 py-2 rounded-lg bg-amber-500 text-white"
+                  style="display: none"
+                >
+                  Cancelar edición
+                </button>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <input
+                  id="importExcelInput"
+                  type="file"
+                  accept=".xlsx, .xls"
+                  class="hidden"
+                />
+                <button
+                  id="btnExportExcel"
+                  type="button"
+                  class="px-3 py-2 rounded-lg border border-slate-200 bg-white hover:shadow"
+                >
+                  Exportar a Excel
+                </button>
+                <button
+                  id="btnImportExcel"
+                  type="button"
+                  class="px-3 py-2 rounded-lg border border-slate-200 bg-white hover:shadow"
+                >
+                  Importar Excel
+                </button>
+                <button
+                  id="btnGenerarPDF"
+                  type="button"
+                  class="px-3 py-2 rounded-lg bg-slate-800 text-white"
+                >
+                  Generar PDF
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <p class="mt-3 text-sm text-slate-500">
+            Nota: las imágenes se almacenan en <strong>localStorage</strong>. El
+            Excel exportado contiene únicamente datos editables (sin imágenes
+            para evitar límites).
+          </p>
+        </section>
+
+        <!-- Table -->
+        <section class="bg-white rounded-2xl shadow p-2 overflow-auto">
+          <div class="min-w-full">
+            <table id="tablaProductos" class="min-w-full divide-y">
+              <thead
+                class="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-500 text-white"
+              >
+                <tr class="text-left">
+                  <th class="px-4 py-3 text-sm font-semibold">Imagen</th>
+                  <th class="px-4 py-3 text-sm font-semibold">Modelo</th>
+                  <th class="px-4 py-3 text-sm font-semibold">Descripción</th>
+                  <th class="px-4 py-3 text-sm font-semibold">Precio 6 UND</th>
+                  <th class="px-4 py-3 text-sm font-semibold">Precio 12 UND</th>
+                  <th class="px-4 py-3 text-sm font-semibold">
+                    Precio por unidad
+                  </th>
+                  <th class="px-4 py-3 text-sm font-semibold">Acciones</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y" id="tbodyProductos">
+                <!-- rows injected by JS -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
     </div>
 
     <script>
-      // ---- Constantes y estado ----
+      /***********************
+       * Mantengo tu lógica  *
+       * sólo adapté selectores
+       ***********************/
+
+      // ---- Estado ----
       const STORAGE_KEY = "catalogo_maquitext_v1";
       let productos = [];
-      let editIndex = -1; // -1 = modo crear, >=0 = editando índice
+      let editIndex = -1;
 
       // Elementos
       const form = document.getElementById("formProducto");
@@ -204,14 +334,17 @@
       const descripcionInput = document.getElementById("descripcion");
       const precio6Input = document.getElementById("precio6");
       const precio12Input = document.getElementById("precio12");
-      const unidadesInput = document.getElementById("unidades");
+      const unidadesInput = document.getElementById("unidades"); // ahora es precio por unidad
       const imagenInput = document.getElementById("imagen");
 
-      const tablaBody = document.querySelector("#tablaProductos tbody");
-      const btnExportExcel = document.getElementById("btnExportExcel");
+      const tablaBody = document.getElementById("tbodyProductos");
+      const btnExportExcel = document.querySelectorAll("#btnExportExcel")[0]; // header & form buttons exist; use first
+      const btnExportExcelForm =
+        document.querySelectorAll("#btnExportExcel")[1]; // fallback
       const btnImportExcel = document.getElementById("btnImportExcel");
       const importExcelInput = document.getElementById("importExcelInput");
-      const btnGenerarPDF = document.getElementById("btnGenerarPDF");
+      const btnGenerarPDFs = document.querySelectorAll("#btnGenerarPDF");
+      const btnGenerarPDF = btnGenerarPDFs[0] || btnGenerarPDFs[1];
       const btnCancelarEdicion = document.getElementById("btnCancelarEdicion");
       const btnAgregar = document.getElementById("btnAgregar");
 
@@ -222,14 +355,12 @@
       // ---- Form submit (agregar/editar) ----
       form.addEventListener("submit", (e) => {
         e.preventDefault();
-
         const modelo = modeloInput.value.trim();
         const descripcion = descripcionInput.value.trim();
         const precio6 = precio6Input.value.trim();
         const precio12 = precio12Input.value.trim();
-        const unidades = unidadesInput.value.trim();
+        const precioUnidad = unidadesInput.value.trim(); // aquí almacenamos precio por unidad
 
-        // Si se seleccionó una imagen nueva -> leer base64; si no y estamos editando -> mantener imagen previa
         if (imagenInput.files && imagenInput.files.length > 0) {
           const file = imagenInput.files[0];
           const reader = new FileReader();
@@ -240,13 +371,12 @@
               descripcion,
               precio6,
               precio12,
-              unidades,
+              unidades: precioUnidad,
               imagen: base64,
             });
           };
           reader.readAsDataURL(file);
         } else {
-          // Sin imagen nueva: en editar, mantener; en crear, dejar vacío
           let imagen = "";
           if (editIndex >= 0 && productos[editIndex])
             imagen = productos[editIndex].imagen || "";
@@ -255,20 +385,20 @@
             descripcion,
             precio6,
             precio12,
-            unidades,
+            unidades: precioUnidad,
             imagen,
           });
         }
       });
 
-      function saveProduct(productoObj) {
+      function saveProduct(obj) {
         if (editIndex >= 0) {
-          productos[editIndex] = productoObj;
+          productos[editIndex] = obj;
           editIndex = -1;
           btnCancelarEdicion.style.display = "none";
-          btnAgregar.textContent = "Agregar Producto";
+          btnAgregar.textContent = "Agregar producto";
         } else {
-          productos.push(productoObj);
+          productos.push(obj);
         }
         form.reset();
         imagenInput.value = "";
@@ -281,8 +411,10 @@
         tablaBody.innerHTML = "";
         productos.forEach((p, idx) => {
           const tr = document.createElement("tr");
+          tr.className = "hover:bg-slate-50";
 
           const tdImg = document.createElement("td");
+          tdImg.className = "px-4 py-3";
           const img = document.createElement("img");
           img.className = "thumb";
           img.alt = "img";
@@ -290,28 +422,36 @@
           tdImg.appendChild(img);
 
           const tdModelo = document.createElement("td");
+          tdModelo.className = "px-4 py-3 font-medium";
           tdModelo.textContent = p.modelo;
           const tdDesc = document.createElement("td");
+          tdDesc.className = "px-4 py-3 text-sm text-slate-600";
           tdDesc.textContent = p.descripcion;
           const tdP6 = document.createElement("td");
-          tdP6.textContent = `$${p.precio6}`;
+          tdP6.className = "px-4 py-3";
+          tdP6.innerHTML = `<span class="text-slate-400">$</span> <span class="font-semibold text-slate-900">${formatMoney(
+            p.precio6
+          )}</span>`;
           const tdP12 = document.createElement("td");
-          tdP12.textContent = `$${p.precio12}`;
+          tdP12.className = "px-4 py-3";
+          tdP12.innerHTML = `<span class="text-slate-400">$</span> <span class="font-semibold text-slate-900">${formatMoney(
+            p.precio12
+          )}</span>`;
           const tdUn = document.createElement("td");
-          tdUn.textContent = p.unidades;
+          tdUn.className = "px-4 py-3";
+          tdUn.innerHTML = `<span class="text-slate-400">$</span> <span class="font-semibold text-slate-900">${formatMoney(
+            p.unidades
+          )}</span>`;
 
           const tdAcc = document.createElement("td");
-          tdAcc.className = "actions";
-
+          tdAcc.className = "px-4 py-3 flex gap-2";
           const btnEdit = document.createElement("button");
           btnEdit.textContent = "Editar";
-          btnEdit.className = "small";
+          btnEdit.className = "px-3 py-1 rounded bg-blue-50 text-blue-700";
           btnEdit.onclick = () => startEdit(idx);
-
           const btnDel = document.createElement("button");
           btnDel.textContent = "Eliminar";
-          btnDel.className = "small";
-          btnDel.style.background = "#ef4444";
+          btnDel.className = "px-3 py-1 rounded bg-red-50 text-red-600";
           btnDel.onclick = () => {
             if (confirm("Eliminar este producto?")) {
               productos.splice(idx, 1);
@@ -343,8 +483,8 @@
         descripcionInput.value = p.descripcion || "";
         precio6Input.value = p.precio6 || "";
         precio12Input.value = p.precio12 || "";
-        unidadesInput.value = p.unidades || "";
-        imagenInput.value = ""; // si quiere cambiar imagen, debe seleccionar
+        unidadesInput.value = p.unidades || ""; // precio por unidad
+        imagenInput.value = "";
         btnCancelarEdicion.style.display = "inline-block";
         btnAgregar.textContent = "Guardar cambios";
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -355,7 +495,7 @@
         form.reset();
         imagenInput.value = "";
         btnCancelarEdicion.style.display = "none";
-        btnAgregar.textContent = "Agregar Producto";
+        btnAgregar.textContent = "Agregar producto";
       });
 
       // ---- localStorage ----
@@ -371,39 +511,33 @@
         }
       }
 
-      // ---- Export to Excel (SheetJS) ----
-      btnExportExcel.addEventListener("click", () => {
-        try {
-          if (productos.length === 0) {
-            alert("No hay productos para exportar");
-            return;
+      // ---- Export to Excel (sin imágenes) ----
+      document.querySelectorAll("#btnExportExcel").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          try {
+            if (productos.length === 0) {
+              alert("No hay productos para exportar");
+              return;
+            }
+            const data = productos.map((p) => ({
+              Modelo: p.modelo,
+              Descripción: p.descripcion,
+              "Precio 6 UND": p.precio6,
+              "Precio 12 UND": p.precio12,
+              "Precio por unidad": p.unidades,
+            }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Catalogo");
+            XLSX.writeFile(wb, "catalogo_maquitext.xlsx");
+          } catch (err) {
+            console.error("Error exportando Excel:", err);
+            alert("Ocurrió un error al generar el Excel. Revisa la consola.");
           }
-
-          // Exportamos SIN imágenes (solo texto y números)
-          const data = productos.map((p) => ({
-            Modelo: p.modelo,
-            Descripción: p.descripcion,
-            "Precio 6 UND": p.precio6,
-            "Precio 12 UND": p.precio12,
-            Unidades: p.unidades,
-            // 🚫 Imagen removida (era base64 y generaba error en Excel)
-          }));
-
-          const ws = XLSX.utils.json_to_sheet(data);
-          const wb = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(wb, ws, "Catálogo");
-
-          // Descargar el archivo
-          XLSX.writeFile(wb, "catalogo_maquitext.xlsx");
-        } catch (err) {
-          console.error("Error exportando Excel:", err);
-          alert(
-            "Ocurrió un error al generar el Excel. Revisa la consola del navegador."
-          );
-        }
+        });
       });
 
-      // ---- Import Excel ----
+      // ---- Import Excel (preserva imagen anterior si la fila no trae imagen) ----
       btnImportExcel.addEventListener("click", () => importExcelInput.click());
       importExcelInput.addEventListener("change", handleImportFile);
 
@@ -417,45 +551,76 @@
           const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
           const json = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
 
-          // 🔹 Ajustamos el mapeo incluyendo "Descripción" (con tilde)
-          const mapped = json.map((row) => {
-            return {
-              modelo: row.Modelo || row.modelo || row.model || "",
-              descripcion:
-                row["Descripción"] || // <--- agregado para reconocer la tilde
-                row.Descripcion ||
-                row.descripcion ||
-                row.desc ||
-                row.description ||
-                "",
-              precio6:
-                row["Precio 6 UND"] ||
-                row.Precio6 ||
-                row.precio6 ||
-                row.price6 ||
-                "",
-              precio12:
-                row["Precio 12 UND"] ||
-                row.Precio12 ||
-                row.precio12 ||
-                row.price12 ||
-                "",
-              unidades: row.Unidades || row.unidades || row.Units || "",
-              imagen: row.ImagenBase64 || row.imagen || row.Imagen || "",
+          // Recorremos cada fila del excel y actualizamos/insertamos
+          json.forEach((row) => {
+            const modeloRow = row.Modelo || row.modelo || row.model || "";
+            // buscar por modelo en productos existentes
+            const existingIndex = productos.findIndex(
+              (p) => p.modelo === modeloRow
+            );
+
+            const descripcionRow =
+              row["Descripción"] ||
+              row.Descripcion ||
+              row.descripcion ||
+              row.desc ||
+              row.description ||
+              "";
+            const precio6Row =
+              row["Precio 6 UND"] ||
+              row.Precio6 ||
+              row.precio6 ||
+              row.price6 ||
+              "";
+            const precio12Row =
+              row["Precio 12 UND"] ||
+              row.Precio12 ||
+              row.precio12 ||
+              row.price12 ||
+              "";
+            const precioPorUnidadRow =
+              row["Precio por unidad"] ||
+              row["Precio por unidad".toUpperCase()] ||
+              row.PrecioPorUnidad ||
+              row.precioUnidad ||
+              row.unidades ||
+              row.Unidades ||
+              "";
+
+            // imagen: si excel trae campo ImagenBase64 lo usamos, si no, conservamos la anterior si existe
+            const imagenRow =
+              row.ImagenBase64 || row.imagen || row.Imagen || "";
+
+            const nuevoProducto = {
+              modelo: modeloRow,
+              descripcion: descripcionRow,
+              precio6: precio6Row,
+              precio12: precio12Row,
+              unidades: precioPorUnidadRow,
+              imagen:
+                imagenRow ||
+                (existingIndex >= 0 ? productos[existingIndex].imagen : ""),
             };
+
+            if (existingIndex >= 0) {
+              productos[existingIndex] = nuevoProducto;
+            } else {
+              productos.push(nuevoProducto);
+            }
           });
 
-          productos = mapped;
           saveToStorage();
           renderTable();
           importExcelInput.value = "";
-          alert("Importación completa. Se actualizaron los productos.");
+          alert("Importación completa. Datos actualizados.");
         };
         reader.readAsBinaryString(f);
       }
 
-      // ---- Generar PDF (jsPDF + autoTable) ----
-      btnGenerarPDF.addEventListener("click", generarPDF);
+      // ---- Generar PDF (logo + tabla con autotable, imágenes en primera columna) ----
+      document
+        .querySelectorAll("#btnGenerarPDF")
+        .forEach((btn) => btn.addEventListener("click", generarPDF));
 
       function generarPDF() {
         if (productos.length === 0) {
@@ -465,66 +630,109 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
 
-        doc.setTextColor(30, 58, 138);
-        doc.setFontSize(18);
-        doc.text("CATALOGO MAQUITEXT", 105, 20, { align: "center" });
+        // Intentar cargar logo desde /images/logo.jpg y convertir con canvas; si falla, usar texto
+        const logoImg = new Image();
+        logoImg.src = "/images/logo.jpg";
+        logoImg.crossOrigin = "anonymous";
+        logoImg.onload = function () {
+          try {
+            const canvas = document.createElement("canvas");
+            canvas.width = logoImg.width;
+            canvas.height = logoImg.height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(logoImg, 0, 0);
+            const logoBase64 = canvas.toDataURL("image/jpeg");
 
-        // Construir tablas por páginas si es necesario - aquí se deja automático por autotable
-        doc.autoTable({
-          startY: 30,
-          head: [
-            [
-              "Imagen",
-              "Modelo",
-              "Descripción",
-              "Precio 6 UND",
-              "Precio 12 UND",
-              "Unidades",
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const logoPDFWidth = 60;
+            const logoPDFHeight =
+              (logoImg.height * logoPDFWidth) / logoImg.width;
+            const xLogo = (pageWidth - logoPDFWidth) / 2;
+            const yLogo = 10;
+            doc.addImage(
+              logoBase64,
+              "JPEG",
+              xLogo,
+              yLogo,
+              logoPDFWidth,
+              logoPDFHeight
+            );
+
+            addTableToDoc(doc, yLogo + logoPDFHeight + 8);
+          } catch (e) {
+            doc.setFontSize(18);
+            doc.setTextColor(30, 58, 138);
+            doc.text("CATALOGO MAQUITEXT", 105, 20, { align: "center" });
+            addTableToDoc(doc, 30);
+          }
+        };
+
+        logoImg.onerror = function () {
+          doc.setFontSize(18);
+          doc.setTextColor(30, 58, 138);
+          doc.text("CATALOGO MAQUITEXT", 105, 20, { align: "center" });
+          addTableToDoc(doc, 30);
+        };
+
+        function addTableToDoc(doc, startY) {
+          doc.autoTable({
+            startY,
+            head: [
+              [
+                "Imagen",
+                "Modelo",
+                "Descripción",
+                "Precio 6 UND",
+                "Precio 12 UND",
+                "Precio por unidad",
+              ],
             ],
-          ],
-          body: productos.map((p) => [
-            {
-              content: "",
-              styles: { cellWidth: 30, minCellHeight: 28 },
-              imagen: p.imagen || "",
-            },
-            p.modelo,
-            p.descripcion,
-            `$${p.precio6}`,
-            `$${p.precio12}`,
-            p.unidades,
-          ]),
-          didDrawCell: function (data) {
-            // dibujar imagen cuando estemos en la primera columna y en body
-            if (data.column.index === 0 && data.cell.section === "body") {
-              const rowIndex = data.row.index;
-              const producto = productos[rowIndex];
-              const b64 = producto && producto.imagen ? producto.imagen : "";
-              if (b64) {
-                // ajustar tamaño para que entre en la celda
-                const dim = Math.min(26, data.cell.height - 4);
-                const x = data.cell.x + (data.cell.width - dim) / 2;
-                const y = data.cell.y + (data.cell.height - dim) / 2;
-                try {
-                  doc.addImage(b64, "JPEG", x, y, dim, dim);
-                } catch (err) {
-                  // puede fallar si base64 no es compatible; ignoramos
+            body: productos.map((p) => [
+              {
+                content: "",
+                styles: { cellWidth: 30, minCellHeight: 28 },
+                imagen: p.imagen || "",
+              },
+              p.modelo,
+              p.descripcion,
+              `$${formatMoney(p.precio6)}`,
+              `$${formatMoney(p.precio12)}`,
+              `$${formatMoney(p.unidades)}`,
+            ]),
+            didDrawCell: function (data) {
+              if (data.column.index === 0 && data.cell.section === "body") {
+                const producto = productos[data.row.index];
+                const b64 = producto && producto.imagen ? producto.imagen : "";
+                if (b64) {
+                  const dim = Math.min(26, data.cell.height - 4);
+                  const x = data.cell.x + (data.cell.width - dim) / 2;
+                  const y = data.cell.y + (data.cell.height - dim) / 2;
+                  try {
+                    doc.addImage(b64, "JPEG", x, y, dim, dim);
+                  } catch (e) {}
                 }
               }
-            }
-          },
-          styles: {
-            valign: "middle",
-            halign: "center",
-            lineColor: [147, 197, 253],
-            lineWidth: 0.2,
-          },
-          headStyles: { fillColor: [37, 99, 235], textColor: 255 },
-          alternateRowStyles: { fillColor: [239, 246, 255] },
-          margin: { left: 10, right: 10 },
-        });
+            },
+            styles: {
+              valign: "middle",
+              halign: "center",
+              lineColor: [147, 197, 253],
+              lineWidth: 0.2,
+            },
+            headStyles: { fillColor: [37, 99, 235], textColor: 255 },
+            alternateRowStyles: { fillColor: [239, 246, 255] },
+            margin: { left: 10, right: 10 },
+          });
+          doc.save("catalogo_maquitext.pdf");
+        }
+      }
 
-        doc.save("catalogo_maquitext.pdf");
+      // ---- Helpers ----
+      function formatMoney(v) {
+        if (v === undefined || v === null || v === "") return "0.00";
+        const n = Number(String(v).replace(/[^0-9.-]+/g, ""));
+        if (Number.isNaN(n)) return "0.00";
+        return n.toFixed(2);
       }
     </script>
   </body>
