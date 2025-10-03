@@ -32,7 +32,7 @@
       body {
         font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto,
           "Helvetica Neue", Arial;
-        background: linear-gradient(180deg, #f6f9ff 0%, #eef6ff 100%);
+        background: #d1d5db;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
@@ -58,7 +58,8 @@
     <div class="max-w-6xl mx-auto px-4 py-8">
       <!-- Header -->
       <header
-        class="flex items-center gap-6 bg-white/60 backdrop-blur-sm rounded-2xl p-4 shadow-md"
+        class="flex items-center gap-6 bg-white backdrop-blur-sm rounded-2xl p-4 shadow-md"
+        style="box-shadow: 6px 5px 6px #000; border: 1px solid #ccc"
       >
         <div class="flex items-center gap-4">
           <img
@@ -80,6 +81,7 @@
           <button
             id="btnExportExcel"
             class="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow hover:scale-[0.995] transition-transform"
+            style="box-shadow: 6px 5px 6px #000"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -100,6 +102,7 @@
           <button
             id="btnImportExcel"
             class="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 hover:shadow"
+            style="box-shadow: 6px 5px 6px #000"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -120,6 +123,7 @@
           <button
             id="btnGenerarPDF"
             class="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 text-white hover:bg-slate-900"
+            style="box-shadow: 6px 5px 6px #000; border: 1px solid #ccc"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -142,7 +146,10 @@
 
       <!-- Main panel -->
       <main class="mt-6 grid gap-6">
-        <section class="bg-white rounded-2xl shadow p-6">
+        <section
+          class="bg-gray-200 rounded-2xl shadow p-6"
+          style="box-shadow: 6px 5px 6px #000; border: 1px solid #ccc"
+        >
           <form
             id="formProducto"
             class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end"
@@ -155,6 +162,7 @@
                 type="text"
                 placeholder="Ej: MTX-2000"
                 class="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                style="box-shadow: 3px 2px 3px #000; border: 1px solid #ccc"
                 required
               />
             </div>
@@ -166,6 +174,7 @@
                 type="text"
                 placeholder="Breve descripción del producto"
                 class="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                style="box-shadow: 3px 2px 3px #000; border: 1px solid #ccc"
                 required
               />
             </div>
@@ -178,6 +187,7 @@
                 step="0.01"
                 placeholder="0.00"
                 class="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                style="box-shadow: 3px 2px 3px #000; border: 1px solid #ccc"
                 required
               />
             </div>
@@ -190,6 +200,7 @@
                 step="0.01"
                 placeholder="0.00"
                 class="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                style="box-shadow: 3px 2px 3px #000; border: 1px solid #ccc"
                 required
               />
             </div>
@@ -202,6 +213,7 @@
                 step="0.01"
                 placeholder="Precio por unidad (ej: 1.50)"
                 class="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                style="box-shadow: 3px 2px 3px #000; border: 1px solid #ccc"
                 required
               />
             </div>
@@ -223,6 +235,7 @@
                   id="btnAgregar"
                   type="submit"
                   class="btn-primary inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow"
+                  style="box-shadow: 6px 5px 6px #000"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -244,6 +257,7 @@
                   id="btnCancelarEdicion"
                   type="button"
                   class="hidden px-3 py-2 rounded-lg bg-amber-500 text-white"
+                  style="box-shadow: 6px 5px 6px #000"
                   style="display: none"
                 >
                   Cancelar edición
@@ -257,34 +271,16 @@
                   accept=".xlsx, .xls"
                   class="hidden"
                 />
-                <button
-                  id="btnExportExcel"
-                  type="button"
-                  class="px-3 py-2 rounded-lg border border-slate-200 bg-white hover:shadow"
-                >
-                  Exportar a Excel
-                </button>
-                <button
-                  id="btnImportExcel"
-                  type="button"
-                  class="px-3 py-2 rounded-lg border border-slate-200 bg-white hover:shadow"
-                >
-                  Importar Excel
-                </button>
-                <button
-                  id="btnGenerarPDF"
-                  type="button"
-                  class="px-3 py-2 rounded-lg bg-slate-800 text-white"
-                >
-                  Generar PDF
-                </button>
               </div>
             </div>
           </form>
         </section>
 
         <!-- Table -->
-        <section class="bg-white rounded-2xl shadow p-2 overflow-auto">
+        <section
+          class="bg-white rounded-2xl shadow p-2 overflow-auto"
+          style="box-shadow: 6px 5px 6px #000; border: 1px solid #ccc"
+        >
           <div class="min-w-full">
             <table id="tablaProductos" class="min-w-full divide-y">
               <thead
@@ -355,50 +351,76 @@
         const precio12 = precio12Input.value.trim();
         const precioUnidad = unidadesInput.value.trim(); // aquí almacenamos precio por unidad
 
-        if (imagenInput.files && imagenInput.files.length > 0) {
-          const file = imagenInput.files[0];
+        if (imagenInput.files.length > 0) {
           const reader = new FileReader();
-          reader.onload = function (ev) {
-            const base64 = ev.target.result;
-            saveProduct({
-              modelo,
-              descripcion,
-              precio6,
-              precio12,
-              unidades: precioUnidad,
-              imagen: base64,
-            });
+          reader.onload = (ev) => {
+            const img = new Image();
+            img.onload = () => {
+              // Crear un canvas temporal
+              const canvas = document.createElement("canvas");
+              const ctx = canvas.getContext("2d");
+
+              const maxSize = 100; // tamaño máximo (ancho/alto)
+              let w = img.width;
+              let h = img.height;
+
+              // Escalar proporcionalmente
+              if (w > h) {
+                if (w > maxSize) {
+                  h *= maxSize / w;
+                  w = maxSize;
+                }
+              } else {
+                if (h > maxSize) {
+                  w *= maxSize / h;
+                  h = maxSize;
+                }
+              }
+
+              canvas.width = w;
+              canvas.height = h;
+
+              ctx.drawImage(img, 0, 0, w, h);
+
+              // Guardar como base64 más ligera (calidad 0.7 para JPG)
+              const resizedDataUrl = canvas.toDataURL("image/jpeg", 0.7);
+
+              producto.imagen = resizedDataUrl;
+              saveProduct(producto);
+            };
+            img.src = ev.target.result;
           };
-          reader.readAsDataURL(file);
+          reader.readAsDataURL(imagenInput.files[0]);
         } else {
-          let imagen = "";
-          if (editIndex >= 0 && productos[editIndex])
-            imagen = productos[editIndex].imagen || "";
-          saveProduct({
-            modelo,
-            descripcion,
-            precio6,
-            precio12,
-            unidades: precioUnidad,
-            imagen,
-          });
+          if (editIndex >= 0 && productos[editIndex]) {
+            producto.imagen = productos[editIndex].imagen;
+          }
+          saveProduct(producto);
+        }
+        const producto = {
+          modelo,
+          descripcion,
+          precio6: formatMoney(precio6),
+          precio12: formatMoney(precio12),
+          unidades: formatMoney(precioUnidad), // aquí almacenamos precio por unidad
+          imagen: "", // se actualizará si hay imagen
+        };
+
+        function saveProduct(producto) {
+          if (editIndex >= 0) {
+            productos[editIndex] = producto;
+            editIndex = -1;
+            btnCancelarEdicion.style.display = "none";
+            btnAgregar.textContent = "Agregar producto";
+          } else {
+            productos.push(producto);
+          }
+          form.reset();
+          imagenInput.value = "";
+          saveToStorage();
+          renderTable();
         }
       });
-
-      function saveProduct(obj) {
-        if (editIndex >= 0) {
-          productos[editIndex] = obj;
-          editIndex = -1;
-          btnCancelarEdicion.style.display = "none";
-          btnAgregar.textContent = "Agregar producto";
-        } else {
-          productos.push(obj);
-        }
-        form.reset();
-        imagenInput.value = "";
-        saveToStorage();
-        renderTable();
-      }
 
       // ---- Render tabla ----
       function renderTable() {
