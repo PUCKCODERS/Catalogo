@@ -345,26 +345,35 @@
       // ---- Form submit (agregar/editar) ----
       form.addEventListener("submit", (e) => {
         e.preventDefault();
+
         const modelo = modeloInput.value.trim();
         const descripcion = descripcionInput.value.trim();
         const precio6 = precio6Input.value.trim();
         const precio12 = precio12Input.value.trim();
-        const precioUnidad = unidadesInput.value.trim(); // aquí almacenamos precio por unidad
+        const precioUnidad = unidadesInput.value.trim();
 
+        // Crear objeto producto antes de procesar imagen
+        const producto = {
+          modelo,
+          descripcion,
+          precio6: formatMoney(precio6),
+          precio12: formatMoney(precio12),
+          unidades: formatMoney(precioUnidad),
+          imagen: "",
+        };
+
+        // Si hay imagen nueva, procesarla
         if (imagenInput.files.length > 0) {
           const reader = new FileReader();
           reader.onload = (ev) => {
             const img = new Image();
             img.onload = () => {
-              // Crear un canvas temporal
               const canvas = document.createElement("canvas");
               const ctx = canvas.getContext("2d");
-
-              const maxSize = 100; // tamaño máximo (ancho/alto)
+              const maxSize = 100;
               let w = img.width;
               let h = img.height;
 
-              // Escalar proporcionalmente
               if (w > h) {
                 if (w > maxSize) {
                   h *= maxSize / w;
@@ -379,10 +388,7 @@
 
               canvas.width = w;
               canvas.height = h;
-
               ctx.drawImage(img, 0, 0, w, h);
-
-              // Guardar como base64 más ligera (calidad 0.7 para JPG)
               const resizedDataUrl = canvas.toDataURL("image/jpeg", 0.7);
 
               producto.imagen = resizedDataUrl;
@@ -392,19 +398,12 @@
           };
           reader.readAsDataURL(imagenInput.files[0]);
         } else {
+          // Mantiene la imagen anterior si está editando
           if (editIndex >= 0 && productos[editIndex]) {
             producto.imagen = productos[editIndex].imagen;
           }
           saveProduct(producto);
         }
-        const producto = {
-          modelo,
-          descripcion,
-          precio6: formatMoney(precio6),
-          precio12: formatMoney(precio12),
-          unidades: formatMoney(precioUnidad), // aquí almacenamos precio por unidad
-          imagen: "", // se actualizará si hay imagen
-        };
 
         function saveProduct(producto) {
           if (editIndex >= 0) {
